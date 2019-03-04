@@ -121,6 +121,110 @@ def figure3(theta, qv, ql, u, v, z, fig_name):
     plt.savefig('../Figure3_Siebesma2003_' + fig_name + '.png', dpi = 150)
     plt.show()
 
+def figure4(theta, qv, ql, u, w, rho, z, fig_name):
+    """
+    Figure of the horizontally averaged turbulent fluxes.
+    (a) turbulent vertical flux of total water
+    (b) turbulent vertical flux of liquid potential temperature
+    (c) turbulent vertical flux of cloud liquid water
+    (d) turbulent vertical flux og virtual potential temperature
+    (e) turbulent zonal momentum flux
+    ----------------------------------------------------------------------------
+    INPUT:
+    Requires qv, ql, theta, u, and w on the same grid in 4D f[t,z,y,x]
+    only input the correct times, will be mean across whole time axis
+    
+    will plot just the resolved turbulent fluxes for now.
+    """
+    Lv = 2.501e6
+    cpd = 1005.
+    # Calculate variables
+    qt = qv + ql # total water is vapour plus cloud liquid
+    tl = theta - (Lv/cpd)*ql # liquid potential temperature approximation from AMS Glossary
+    tv = theta*(1. + 0.608*qv) # virtual potential temperature
+    
+    # Calculate the turbulent fluxes
+    wp = np.zeros_like(w)
+    wbar = np.mean(w, axis = (0, 2, 3))
+    qtp = np.zeros_like(qt)
+    qtbar = np.mean(qt, axis = (0, 2, 3))
+    tlp = np.zeros_like(tl)
+    tlbar = np.mean(tl, axis = (0, 2, 3))
+    qlp = np.zeros_like(ql)
+    qlbar = np.mean(ql, axis = (0, 2, 3))
+    tvp = np.zeros_like(tv)
+    tvbar = np.mean(tv, axis = (0, 2, 3))
+    up = np.zeros_like(u)
+    ubar = np.mean(u, axis = (0, 2, 3))
+    
+    for it in xrange(w.shape[0]):
+        wp[it,:,:,:]  = np.transpose(np.transpose(w[it,:,:,:]) - wbar)
+        qtp[it,:,:,:] = np.transpose(np.transpose(qt[it,:,:,:]) - qtbar)
+        tlp[it,:,:,:] = np.transpose(np.transpose(tl[it,:,:,:]) - tlbar)
+        qlp[it,:,:,:] = np.transpose(np.transpose(ql[it,:,:,:]) - qlbar)
+        tvp[it,:,:,:] = np.transpose(np.transpose(tv[it,:,:,:]) - tvbar)
+        up[it,:,:,:] = np.transpose(np.transpose(u[it,:,:,:]) - ubar)
+    
+    wpqtp = np.mean(rho*wp*qtp, axis = (0, 2, 3))
+    wptlp = np.mean(rho*wp*tlp, axis = (0, 2, 3))
+    wpqlp = np.mean(rho*wp*qlp, axis = (0, 2, 3))
+    wptvp = np.mean(rho*wp*tvp, axis = (0, 2, 3))
+    wpup  = np.mean(wp*up, axis = (0, 2, 3))
+    
+    fig = plt.figure(tight_layout = True)
+    axa = fig.add_subplot(3, 2, 1)
+    axa.plot(Lv*wpqtp, z, 'k')
+    axa.set_xlim([0, 175])
+    axa.set_ylim([0, 2500])
+    axa.set_xticks(range(0, 175, 25))
+    axa.set_yticks(range(0, 2500, 500))
+    axa.set_xlabel("$\overline{w^{`}q_{t}^{`}}$ (W/m$^{2}$)")
+    axa.set_ylabel('height (m)')
+    plt.grid()
+    
+    axb = fig.add_subplot(3, 2, 2)
+    axb.plot(cpd*wptlp, z, 'k')
+    axb.set_xlim([-40, 10])
+    axb.set_ylim([0, 2500])
+    axb.set_xticks(range(-40, 11, 10))
+    axb.set_yticks(range(0, 2500, 500))
+    axb.set_xlabel("$\overline{w^{`}\\theta_{l}^{`}}$ (W/m$^{2}$)")
+    axb.set_ylabel('height (m)')
+    plt.grid()
+    
+    axc = fig.add_subplot(3, 2, 3)
+    axc.plot(Lv*wpqlp, z, 'k')
+    axc.set_xlim([0, 40])
+    axc.set_ylim([0, 2500])
+    axc.set_xticks(range(0, 41, 10))
+    axc.set_yticks(range(0, 2500, 500))
+    axc.set_xlabel("$\overline{w^{`}q_{l}^{`}}$ (W/m$^{2}$)")
+    axc.set_ylabel('height (m)')
+    plt.grid()
+    
+    axd = fig.add_subplot(3, 2, 4)
+    axd.plot(cpd*wptvp, z, 'k')
+    axd.set_xlim([-10, 30])
+    axd.set_ylim([0, 2500])
+    axd.set_xticks(range(-10, 31, 10))
+    axd.set_yticks(range(0, 2500, 500))
+    axd.set_xlabel("$\overline{w^{`}\\theta_{v}^{`}}$ (W/m$^{2}$)")
+    axd.set_ylabel('height (m)')
+    plt.grid()
+    
+    axe = fig.add_subplot(3, 2, 5)
+    axe.plot(wpup, z, 'k')
+    axe.set_xlim([0.05, 0.1])
+    axe.set_ylim([0, 2500])
+    axe.set_xticks(np.arange(-0.05, 0.11, 0.05))
+    axe.set_yticks(range(0, 2500, 500))
+    axe.set_xlabel("$\overline{w^{`}u^{`}}$ (m$^{2}$/s$^{2}$)")
+    axe.set_ylabel('height (m)')
+    plt.grid()
+    
+    plt.savefig('../Figure4_Siebesma2003_'+fig_name+'.png', dpi = 150)
+    plt.show()
+
 def main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_path, fig_name, verbose = True):
     """
     Read in the netCDF data and process it to create variables for our plots
@@ -187,7 +291,7 @@ def main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_pa
     
     if verbose:
         print 'Plotting Figure 2'
-    figure2(lwp_nc, lwp_key, lwp_time_key, viTKE, TKE_time, fig_name)
+    #figure2(lwp_nc, lwp_key, lwp_time_key, viTKE, TKE_time, fig_name)
     
     # read additional variables for figure 3
     theta_nc = Dataset(theta_path, 'r')
@@ -204,8 +308,11 @@ def main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_pa
     
     # Filter to only hour five of the simulation
     hour5_indexes = [i for i in xrange(len(w_nc.variables[w_time_key])) if 300. <= w_nc.variables[w_time_key][i] <= 360.]
-    figure3(theta_data[hour5_indexes,:,:,:], qv_data[hour5_indexes,:,:,:], mcl_data[hour5_indexes,:,:,:], u_data[hour5_indexes,:,:,:], v_data[hour5_indexes,:,:,:], w_nc.variables[z_w][:]*1., fig_name)
+    #figure3(theta_data[hour5_indexes,:,:,:], qv_data[hour5_indexes,:,:,:], mcl_data[hour5_indexes,:,:,:], u_data[hour5_indexes,:,:,:], v_data[hour5_indexes,:,:,:], w_nc.variables[z_w][:]*1., fig_name)
     
+    # Filter to 180 to 360 minutes
+    hour3to6_indexes = [i for i in xrange(len(w_nc.variables[w_time_key])) if 180. <= w_nc.variables[w_time_key][i] <= 360.]
+    figure4(theta_data[hour3to6_indexes,:,:,:], qv_data[hour3to6_indexes,:,:,:], mcl_data[hour3to6_indexes,:,:,:], u_data[hour3to6_indexes,:,:,:], w_nc.variables[w_key][hour3to6_indexes,:,:,:]*1., rho_data[hour3to6_indexes,:,:,:], w_nc.variables[z_w][:]*1., fig_name)
     lwp_nc.close()
     u_nc.close()
     v_nc.close()
@@ -213,15 +320,16 @@ def main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_pa
     rho_nc.close()
     
 # Define the path to the netCDF containing our variables
-lwp_path = '/nerc/n02/n02/xb899100/BOMEX/Control/water.nc'
-u_path = '/nerc/n02/n02/xb899100/BOMEX/Control/wind.nc'
-v_path = '/nerc/n02/n02/xb899100/BOMEX/Control/wind.nc'
-w_path = '/nerc/n02/n02/xb899100/BOMEX/Control/wind.nc'
-rho_path = '/nerc/n02/n02/xb899100/BOMEX/Control/thermo.nc'
-theta_path = '/nerc/n02/n02/xb899100/BOMEX/Control/thermo.nc'
-qv_path = '/nerc/n02/n02/xb899100/BOMEX/Control/water.nc'
-mcl_path = '/nerc/n02/n02/xb899100/BOMEX/Control/water.nc'
-
+lwp_path = '/nerc/n02/n02/xb899100/BOMEX/Control/water.nc' # path to netCDF containing LWP
+u_path = '/nerc/n02/n02/xb899100/BOMEX/Control/wind.nc' # path to netCDF containing u
+v_path = '/nerc/n02/n02/xb899100/BOMEX/Control/wind.nc' # path to netCDF containing v
+w_path = '/nerc/n02/n02/xb899100/BOMEX/Control/wind.nc' # path to netCDF containing w
+rho_path = '/nerc/n02/n02/xb899100/BOMEX/Control/thermo.nc' # path to netCDF containing rho
+theta_path = '/nerc/n02/n02/xb899100/BOMEX/Control/thermo.nc' # path to netCDF containing theta
+qv_path = '/nerc/n02/n02/xb899100/BOMEX/Control/water.nc' # path to netCDF containing qv
+mcl_path = '/nerc/n02/n02/xb899100/BOMEX/Control/water.nc' # path to netCDF containing mcl
+heat_path = '/nerc/n02/n02/xb899100/BOMEX/Control/tempinc.nc' # path to netCDF containing boundary layer heat fluxes (subgrid?)
+moist_path = '/nerc/n02/n02/xb899100/BOMEX/Control/qinc.nc' # path to netCDF containing boundary layer moisture fluxes (subgrid?)
 my_fig_name = 'Control'
 main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_path, my_fig_name, verbose = False)
 
