@@ -56,8 +56,8 @@ def figure2(lwp_nc, lwp_key, lwp_time_key, viTKE, TKE_time, fig_name):
     ax2.set_ylabel('TKE (kgm$^{-1}$s$^{-2}$)')
     ax2.text(10, 625, 'c)')
     
-    plt.savefig('../Figure2_Siebesma2003_'+ fig_name + '.png', dpi = 150)
-    plt.show()
+    plt.savefig('../BOMEX_figs/Figure2_Siebesma2003_'+ fig_name + '.png', dpi = 150)
+    #plt.show()
 
 def figure3(theta, qv, ql, u, v, z, fig_name):
     """
@@ -81,9 +81,10 @@ def figure3(theta, qv, ql, u, v, z, fig_name):
     v_mean = np.nanmean(v, axis = (0, 2, 3))
     v_std = np.std(v, axis = (0, 2, 3))
     
-    fig = plt.figure(figsize = (12, 12), tight_layout = True)
+    fig = plt.figure(figsize = (9, 9), tight_layout = True)
     # Potential Temperature
     ax0 = fig.add_subplot(2, 2, 1)
+    ax0.plot([298.7, 298.7, 302.4, 308.2, 311.85], [0., 520., 1480., 2000., 3000.], 'r--')
     ax0.plot(theta_mean, z, color = 'k', lw = 2)
     ax0.fill_betweenx(z, theta_mean - theta_std, theta_mean + theta_std, color = 'k', alpha = 0.5, edgecolor = '')
     ax0.set_xlim([298, 310])
@@ -93,6 +94,7 @@ def figure3(theta, qv, ql, u, v, z, fig_name):
     ax0.set_ylabel('height (m)')
     # Specific humidity
     ax1 = fig.add_subplot(2, 2, 2)
+    ax1.plot([17.0, 16.3, 10.7, 4.2, 3.0], [0., 520., 1480., 2000., 3000.], 'r--')
     ax1.plot(qv_mean, z, color = 'k', lw = 2)
     ax1.fill_betweenx(z, qv_mean - qv_std, qv_mean + qv_std, color = 'k', alpha = 0.5, edgecolor = '')
     ax1.set_xlim([4, 18])
@@ -102,12 +104,15 @@ def figure3(theta, qv, ql, u, v, z, fig_name):
     ax1.set_ylabel('height (m)')
     # Winds
     ax2 = fig.add_subplot(2, 2, 3)
+    ax2.plot([-8.75, -8.75, -4.61], [0., 700., 3000.], 'r--')
+    ax2.plot([0., 0.], [0., 3000.], 'b--')
     ax2.plot(u_mean, z, color = 'k', lw = 2)
     ax2.fill_betweenx(z, u_mean - u_std, u_mean + u_std, color = 'k', alpha = 0.5, edgecolor = '')
     ax2.plot(v_mean, z, color = 'k', lw = 2)
     ax2.fill_betweenx(z, v_mean - v_std, v_mean + v_std, color = 'k', alpha = 0.5, edgecolor = '')
     ax2.set_xlim([-10, 2])
     ax2.set_ylim([0, 2500])
+    ax2.text(-8.75, 2250, 'c)')
     ax2.set_xlabel('u (m/s)    v (m/s)')
     ax2.set_ylabel('height (m)')
     # Cloud liquid
@@ -115,13 +120,14 @@ def figure3(theta, qv, ql, u, v, z, fig_name):
     ax3.plot(ql_mean, z, color = 'k', lw = 2)
     ax3.set_xlim([0, 0.01])
     ax3.set_ylim([0, 2500])
+    ax3.text(0.001, 2250, 'b)')
     ax3.set_xlabel('q$_l$ (g/kg)')
     ax3.set_ylabel('height (m)')
     
-    plt.savefig('../Figure3_Siebesma2003_' + fig_name + '.png', dpi = 150)
-    plt.show()
+    plt.savefig('../BOMEX_figs/Figure3_Siebesma2003_' + fig_name + '.png', dpi = 150)
+    #plt.show()
 
-def figure4(theta, qv, ql, u, w, rho, z, fig_name):
+def figure4(theta, qv, ql, u, w, rho, shf, lhf, z, fig_name):
     """
     Figure of the horizontally averaged turbulent fluxes.
     (a) turbulent vertical flux of total water
@@ -163,32 +169,33 @@ def figure4(theta, qv, ql, u, w, rho, z, fig_name):
         tlp[it,:,:,:] = np.transpose(np.transpose(tl[it,:,:,:]) - tlbar)
         qlp[it,:,:,:] = np.transpose(np.transpose(ql[it,:,:,:]) - qlbar)
         tvp[it,:,:,:] = np.transpose(np.transpose(tv[it,:,:,:]) - tvbar)
-        up[it,:,:,:] = np.transpose(np.transpose(u[it,:,:,:]) - ubar)
+        up[it,:,:,:]  = np.transpose(np.transpose(u[it,:,:,:]) - ubar)
     
-    wpqtp = np.mean(rho*wp*qtp, axis = (0, 2, 3))
+    wpqtp = np.mean(rho*wp*qtp + lhf, axis = (0, 2, 3))
     wptlp = np.mean(rho*wp*tlp, axis = (0, 2, 3))
+    shf_m = np.mean(shf, axis = (0, 2, 3))
     wpqlp = np.mean(rho*wp*qlp, axis = (0, 2, 3))
     wptvp = np.mean(rho*wp*tvp, axis = (0, 2, 3))
     wpup  = np.mean(wp*up, axis = (0, 2, 3))
     
-    fig = plt.figure(tight_layout = True)
+    fig = plt.figure(tight_layout = True, figsize = (9, 12))
     axa = fig.add_subplot(3, 2, 1)
     axa.plot(Lv*wpqtp, z, 'k')
     axa.set_xlim([0, 175])
     axa.set_ylim([0, 2500])
     axa.set_xticks(range(0, 175, 25))
     axa.set_yticks(range(0, 2500, 500))
-    axa.set_xlabel("$\overline{w^{`}q_{t}^{`}}$ (W/m$^{2}$)")
+    axa.set_xlabel("$\overline{w^{\prime}q_{t}^{\prime}}$ (W/m$^{2}$)")
     axa.set_ylabel('height (m)')
     plt.grid()
     
     axb = fig.add_subplot(3, 2, 2)
-    axb.plot(cpd*wptlp, z, 'k')
+    axb.plot(cpd*wptlp + shf_m, z, 'k')
     axb.set_xlim([-40, 10])
     axb.set_ylim([0, 2500])
     axb.set_xticks(range(-40, 11, 10))
     axb.set_yticks(range(0, 2500, 500))
-    axb.set_xlabel("$\overline{w^{`}\\theta_{l}^{`}}$ (W/m$^{2}$)")
+    axb.set_xlabel("$\overline{w^{\prime}\\theta_{l}^{\prime}}$ (W/m$^{2}$)")
     axb.set_ylabel('height (m)')
     plt.grid()
     
@@ -198,7 +205,7 @@ def figure4(theta, qv, ql, u, w, rho, z, fig_name):
     axc.set_ylim([0, 2500])
     axc.set_xticks(range(0, 41, 10))
     axc.set_yticks(range(0, 2500, 500))
-    axc.set_xlabel("$\overline{w^{`}q_{l}^{`}}$ (W/m$^{2}$)")
+    axc.set_xlabel("$\overline{w^{\prime}q_{l}^{\prime}}$ (W/m$^{2}$)")
     axc.set_ylabel('height (m)')
     plt.grid()
     
@@ -208,7 +215,7 @@ def figure4(theta, qv, ql, u, w, rho, z, fig_name):
     axd.set_ylim([0, 2500])
     axd.set_xticks(range(-10, 31, 10))
     axd.set_yticks(range(0, 2500, 500))
-    axd.set_xlabel("$\overline{w^{`}\\theta_{v}^{`}}$ (W/m$^{2}$)")
+    axd.set_xlabel("$\overline{w^{\prime}\\theta_{v}^{\prime}}$ (W/m$^{2}$)")
     axd.set_ylabel('height (m)')
     plt.grid()
     
@@ -218,11 +225,11 @@ def figure4(theta, qv, ql, u, w, rho, z, fig_name):
     axe.set_ylim([0, 2500])
     axe.set_xticks(np.arange(-0.05, 0.11, 0.05))
     axe.set_yticks(range(0, 2500, 500))
-    axe.set_xlabel("$\overline{w^{`}u^{`}}$ (m$^{2}$/s$^{2}$)")
+    axe.set_xlabel("$\overline{w^{\prime}u^{\prime}}$ (m$^{2}$/s$^{2}$)")
     axe.set_ylabel('height (m)')
     plt.grid()
     
-    plt.savefig('../Figure4_Siebesma2003_'+fig_name+'.png', dpi = 150)
+    plt.savefig('../BOMEX_figs/Figure4_Siebesma2003_'+fig_name+'.png', dpi = 150)
     plt.show()
 
 def main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_path, fig_name, verbose = True):
@@ -239,14 +246,18 @@ def main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_pa
     theta_key = u'STASH_m01s00i004'
     qv_key    = u'STASH_m01s00i010'
     mcl_key   = u'STASH_m01s00i392'
+    shf_key   = u'STASH_m01s03i216'
+    lhf_key   = u'STASH_m01s03i222'
     
     if verbose:
         print 'Opening netCDFs'
     lwp_nc = Dataset(lwp_path, 'r')
-    u_nc = Dataset(u_path, 'r')
-    v_nc = Dataset(v_path, 'r')
-    w_nc = Dataset(w_path, 'r')
+    u_nc   = Dataset(u_path, 'r')
+    v_nc   = Dataset(v_path, 'r')
+    w_nc   = Dataset(w_path, 'r')
     rho_nc = Dataset(rho_path, 'r')
+    tinc_nc = Dataset(heat_path, 'r')
+    qinc_nc = Dataset(moist_path, 'r')
     
     # Get the dimensions for my winds and rho
     if verbose:
@@ -265,7 +276,10 @@ def main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_pa
     lon_rho = 'longitude_t'
     
     w_time_shape = w_nc.variables[w_key][:].shape[0]
+    f_time_shape = qinc_nc.variables[lhf_key][:].shape[0]
+
     w_time_key = [key for key in w_nc.variables.keys() if ('min' in key) and (w_nc.variables[key].shape[0] == w_time_shape)][0]
+    f_time_key = [key for key in qinc_nc.variables.keys() if ('min' in key) and (qinc_nc.variables[key].shape[0] == f_time_shape)][0]
     
     if verbose:
         print 'Regridding the data for TKE calculation'
@@ -291,7 +305,7 @@ def main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_pa
     
     if verbose:
         print 'Plotting Figure 2'
-    #figure2(lwp_nc, lwp_key, lwp_time_key, viTKE, TKE_time, fig_name)
+    figure2(lwp_nc, lwp_key, lwp_time_key, viTKE, TKE_time, fig_name)
     
     # read additional variables for figure 3
     theta_nc = Dataset(theta_path, 'r')
@@ -308,11 +322,20 @@ def main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_pa
     
     # Filter to only hour five of the simulation
     hour5_indexes = [i for i in xrange(len(w_nc.variables[w_time_key])) if 300. <= w_nc.variables[w_time_key][i] <= 360.]
-    #figure3(theta_data[hour5_indexes,:,:,:], qv_data[hour5_indexes,:,:,:], mcl_data[hour5_indexes,:,:,:], u_data[hour5_indexes,:,:,:], v_data[hour5_indexes,:,:,:], w_nc.variables[z_w][:]*1., fig_name)
+    figure3(theta_data[hour5_indexes,:,:,:], qv_data[hour5_indexes,:,:,:], mcl_data[hour5_indexes,:,:,:], u_data[hour5_indexes,:,:,:], v_data[hour5_indexes,:,:,:], w_nc.variables[z_w][:]*1., fig_name)
     
     # Filter to 180 to 360 minutes
     hour3to6_indexes = [i for i in xrange(len(w_nc.variables[w_time_key])) if 180. <= w_nc.variables[w_time_key][i] <= 360.]
-    figure4(theta_data[hour3to6_indexes,:,:,:], qv_data[hour3to6_indexes,:,:,:], mcl_data[hour3to6_indexes,:,:,:], u_data[hour3to6_indexes,:,:,:], w_nc.variables[w_key][hour3to6_indexes,:,:,:]*1., rho_data[hour3to6_indexes,:,:,:], w_nc.variables[z_w][:]*1., fig_name)
+    hr3to6_indexes_f = [i for i in xrange(len(qinc_nc.variables[f_time_key])) if 180. <= qinc_nc.variables[f_time_key][i] <= 360.]
+    
+    qcl_data = mcl_data[hour3to6_indexes,:,:,:]/(1. + mcl_data[hour3to6_indexes,:,:,:])
+    # Read the subgrid theta_l and q_T turbulent fluxes
+    shf_data = regrid_array(tinc_nc.variables[shf_key][:]*1., tinc_nc.variables[z_rho][:], tinc_nc.variables[lat_rho][:]*1., tinc_nc.variables[lon_rho][:]*1., w_nc.variables[z_w][:]*1., w_nc.variables[lat_w][:]*1., w_nc.variables[lon_w][:]*1., verbose)
+    lhf_data = regrid_array(qinc_nc.variables[lhf_key][:]*1., qinc_nc.variables[z_rho][:], qinc_nc.variables[lat_rho][:]*1., qinc_nc.variables[lon_rho][:]*1., w_nc.variables[z_w][:]*1., w_nc.variables[lat_w][:]*1., w_nc.variables[lon_w][:]*1., verbose)
+    tinc_nc.close()
+    qinc_nc.close()
+    
+    figure4(theta_data[hour3to6_indexes,:,:,:], qv_data[hour3to6_indexes,:,:,:], qcl_data, u_data[hour3to6_indexes,:,:,:], w_nc.variables[w_key][hour3to6_indexes,:,:,:]*1., rho_data[hour3to6_indexes,:,:,:], shf_data[hr3to6_indexes_f,:,:,:], lhf_data[hr3to6_indexes_f,:,:,:], w_nc.variables[z_w][:]*1., fig_name)
     lwp_nc.close()
     u_nc.close()
     v_nc.close()
@@ -320,16 +343,30 @@ def main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_pa
     rho_nc.close()
     
 # Define the path to the netCDF containing our variables
-lwp_path = '/nerc/n02/n02/xb899100/BOMEX/Control/water.nc' # path to netCDF containing LWP
-u_path = '/nerc/n02/n02/xb899100/BOMEX/Control/wind.nc' # path to netCDF containing u
-v_path = '/nerc/n02/n02/xb899100/BOMEX/Control/wind.nc' # path to netCDF containing v
-w_path = '/nerc/n02/n02/xb899100/BOMEX/Control/wind.nc' # path to netCDF containing w
-rho_path = '/nerc/n02/n02/xb899100/BOMEX/Control/thermo.nc' # path to netCDF containing rho
-theta_path = '/nerc/n02/n02/xb899100/BOMEX/Control/thermo.nc' # path to netCDF containing theta
-qv_path = '/nerc/n02/n02/xb899100/BOMEX/Control/water.nc' # path to netCDF containing qv
-mcl_path = '/nerc/n02/n02/xb899100/BOMEX/Control/water.nc' # path to netCDF containing mcl
-heat_path = '/nerc/n02/n02/xb899100/BOMEX/Control/tempinc.nc' # path to netCDF containing boundary layer heat fluxes (subgrid?)
-moist_path = '/nerc/n02/n02/xb899100/BOMEX/Control/qinc.nc' # path to netCDF containing boundary layer moisture fluxes (subgrid?)
-my_fig_name = 'Control'
-main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_path, my_fig_name, verbose = False)
+exp = 'L140_noBL'
+l_control = 0
+if l_control:
+    lwp_path   = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/water.nc' # path to netCDF containing LWP for L75 sims
+    u_path     = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/wind.nc' # path to netCDF containing u
+    v_path     = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/wind.nc' # path to netCDF containing v
+    w_path     = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/wind.nc' # path to netCDF containing w
+    rho_path   = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/thermo.nc' # path to netCDF containing rho
+    theta_path = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/thermo.nc' # path to netCDF containing theta
+    qv_path    = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/water.nc' # path to netCDF containing qv
+    mcl_path   = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/water.nc' # path to netCDF containing mcl
+    heat_path  = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/tempinc.nc' # path to netCDF containing boundary layer heat fluxes (subgrid?)
+    moist_path = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/qinc.nc' # path to netCDF containing boundary layer moisture fluxes (subgrid?)
+else:
+    lwp_path   = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/lwp.nc' # path to netCDF containing LWP L140 sims
+    u_path     = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/u.nc' # path to netCDF containing u
+    v_path     = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/v.nc' # path to netCDF containing v
+    w_path     = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/bouy.nc' # path to netCDF containing w
+    rho_path   = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/fluxes.nc' # path to netCDF containing rho
+    theta_path = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/bouy.nc' # path to netCDF containing theta
+    qv_path    = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/mr.nc' # path to netCDF containing qv
+    mcl_path   = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/mr.nc' # path to netCDF containing mcl
+    heat_path  = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/tempinc.nc' # path to netCDF containing boundary layer heat fluxes (subgrid?)
+    moist_path = '/nerc/n02/n02/xb899100/BOMEX/' + exp + '/qinc.nc' # path to netCDF containing boundary layer moisture fluxes (subgrid?)
+
+main(lwp_path, u_path, v_path, w_path, rho_path, theta_path, qv_path, mcl_path, exp, verbose = 0)
 
